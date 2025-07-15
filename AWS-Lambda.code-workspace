@@ -1,0 +1,10 @@
+{
+	"folders": [
+		{
+			"path": "../Lambda-gihub/AWS-Lambda"
+		},
+		{
+			"path": "../Lambda-gihub/serverless-app"
+		}
+	]
+}
