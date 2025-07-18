@@ -1,7 +1,7 @@
 window.PETSTAY_CONFIG = {
   AWS_REGION: "us-east-2",
   COGNITO_USER_POOL_ID: "us-east-2_QE95UaiRH",
-  COGNITO_USER_POOL_CLIENT_ID: "3itnhokg7ilejl0qm7nvkstsa4",
+  COGNITO_USER_POOL_CLIENT_ID: "58fpjcpmp7u35cl0mqgcpo8hur",
   COGNITO_DOMAIN: "https://us-east-2qe95uairh.auth.us-east-2.amazoncognito.com",
   REDIRECT_SIGN_IN_URL: "{{REDIRECT_SIGN_IN_URL}}",
   REDIRECT_SIGN_OUT_URL: "{{REDIRECT_SIGN_OUT_URL}}",
