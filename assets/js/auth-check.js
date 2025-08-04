@@ -16,7 +16,7 @@ const amplifyAuthConfig = {
   userPoolId: 'us-east-2_QE95UaiRH', //write your Cognito User Pool ID here
   userPoolWebClientId: '8fpjcpmp7u35cl0mqgcpo8hur', //write your Cognito User Pool Client ID here
   oauth: {
-    domain: 'https://useast-2qe95uairh.auth.useast-2.amazoncognito.com', //write your Cognito Domain here
+    domain: 'useast-2qe95uairh.auth.useast-2.amazoncognito.com', //write your Cognito Domain here
     scope: ['email', 'openid', 'phone'], // OAuth scopes
     redirectSignIn: '{{REDIRECT_SIGN_IN_URL}}', //write your Redirect Sign In URL here
     redirectSignOut: '{{REDIRECT_SIGN_OUT_URL}}', //write your Redirect Sign Out URL here
