@@ -20,6 +20,8 @@ const amplifyAuthConfig = {
     scope: ['email', 'openid', 'phone'], // OAuth scopes
     redirectSignIn: 'https://main.d18pgoc9fdlixd.amplifyapp.com/admin-frontend/post-login.html', //write your Redirect Sign In URL here
     redirectSignOut: 'https://main.d18pgoc9fdlixd.amplifyapp.com/index.html', //write your Redirect Sign Out URL here
+    redirectSignIn: 'https://main.d18pgoc9fdlixd.amplifyapp.com/admin-frontend/post-login.html', //write your Redirect Sign In URL here
+    redirectSignOut: 'https://main.d18pgoc9fdlixd.amplifyapp.com/index.html', //write your Redirect Sign Out URL here
     responseType: 'code', // OAuth flow to use (code for authorization code grant)
   }
 };
