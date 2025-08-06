@@ -6,9 +6,9 @@ window.PETSTAY_CONFIG = {
   REDIRECT_SIGN_IN_URL: "https://main.d18pgoc9fdlixd.amplifyapp.com/admin-frontend/post-login.html",
   REDIRECT_SIGN_OUT_URL: "https://main.d18pgoc9fdlixd.amplifyapp.com/index.html",
   REDIRECT_ADMIN_SIGN_IN_URL: "https://main.d18pgoc9fdlixd.amplifyapp.com/admin-frontend/post-login.html",
-  BOOKINGS_API_URL: "https://8xst4a2r8a.execute-api.us-east-2.amazonaws.com/prod/Bookings",
+  BOOKINGS_API_URL: "https://jtvgp8np2k.execute-api.us-east-2.amazonaws.com/prod/bookings",
   ROOMS_AVAILABILITY_API_URL: "{{ROOMS_AVAILABILITY_API_URL}}",
-  NEW_BOOKING_API_URL: "https://8xst4a2r8a.execute-api.us-east-2.amazonaws.com/prod/Bookings",
+  NEW_BOOKING_API_URL: "https://jtvgp8np2k.execute-api.us-east-2.amazonaws.com/prod/newbooking",
   CHECKIN_API_URL: "{{CHECKIN_API_URL}}"
 };
 
