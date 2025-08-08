@@ -47,6 +47,22 @@
             <span class="text">Bookings</span>
           </a>
         </li>
+
+        <li class="nav-item active">
+          <a href="/admin-frontend/iot-dashboard.html">
+            <span class="icon"><i class="lni lni-stats-up"></i></span>
+            <span class="text">IoT Live Stats</span>
+          </a>
+        </li>
+
+        <li class="nav-item active">
+          <a href="/admin-frontend/mqtt-test.html">
+            <span class="icon"><i class="lni lni-stats-up"></i></span>
+            <span class="text">IoT Testing</span>
+          </a>
+        </li>
+
+
       </ul>
     </nav>
   </aside>
@@ -126,7 +142,6 @@
     <!-- ========== table components start ========== -->
     <section class="table-components">
       <div class="container-fluid">
-        <!-- ========== title-wrapper start ========== -->
         <div class="title-wrapper pt-30">
           <div class="row align-items-center">
             <div class="col-md-6">
@@ -134,7 +149,6 @@
                 <h2>Manage Bookings</h2>
               </div>
             </div>
-            <!-- end col -->
             <div class="col-md-6">
               <div class="breadcrumb-wrapper">
                 <nav aria-label="breadcrumb">
@@ -174,52 +188,51 @@
               </select>
             </div>
           </div>
-
-          <div class="row">
+          <div class="row mt-4">
             <div class="col-lg-12">
               <div class="card-style mb-30">
-                <h6 class="mb-10">Manage Bookings</h6>
-                <p class="text-sm mb-20">View and manage current and upcoming pet bookings.</p>
-                <div class="table-wrapper table-responsive">
-                  <table class="table">
+                <div class="title d-flex justify-content-between align-items-center mb-3">
+                  <h6 class="text-medium">All Bookings</h6>
+                </div>
+                <div class="table-responsive">
+                  <table class="table top-selling-table">
                     <thead>
                       <tr>
                         <th>#</th>
-                        <th>Customer</th>
-                        <th>Pet Name</th>
-                        <th>Species</th>
-                        <th>Breed</th>
-                        <th>Age</th>
-                        <th>Check-In</th>
-                        <th>Check-Out</th>
+                        <th>Pet</th>
+                        <th>Owner</th>
                         <th>Status</th>
                         <th>Actions</th>
                       </tr>
                     </thead>
-
-                    <tbody id="bookingsTableBody"> </tbody>
+                    <tbody id="bookingsTableBody">
+                      <!-- Dynamically injected by JS -->
+                    </tbody>
                   </table>
                 </div>
               </div>
             </div>
           </div>
+
+
         </div>
 
-
         <!-- Booking Details Modal -->
-        <div class="modal fade" id="bookingModal" tabindex="-1" aria-labelledby="bookingModalLabel" aria-hidden="true">
-          <div class="modal-dialog modal-dialog-scrollable modal-md">
+        <div class="modal fade" id="bookingDetailsModal" tabindex="-1" aria-labelledby="bookingDetailsModalLabel"
+          aria-hidden="true">
+          <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content">
               <div class="modal-header">
-                <h5 class="modal-title" id="bookingModalLabel">Booking Details</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <h5 class="modal-title" id="bookingDetailsModalLabel">Booking Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
               </div>
-              <div class="modal-body" id="modalDetails">
-                <!-- Dynamically populated -->
+              <div class="modal-body" id="modalContent">
+                <!-- Injected dynamically -->
               </div>
             </div>
           </div>
         </div>
+
 
         <!-- Toast Container -->
         <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
@@ -288,73 +301,44 @@
   <script src="/assets/js/auth-check.js"></script>
 
   <script>
-    /**
-     * Get the Cognito Auth Token for secure API calls
-     */
     async function getAuthToken() {
-      // Use Amplify to get the current user session
       const session = await Amplify.Auth.currentSession();
-      // Return the JWT token for the ID Token
       return session.getIdToken().getJwtToken();
     }
 
-    // Stores all bookings in memory for search/filter
     let allBookings = [];
 
-    /**
-     * When the page loads:
-     * - Fetch bookings from API
-     * - Hook up search input and filter dropdowns
-     */
     document.addEventListener("DOMContentLoaded", async () => {
-      await loadBookings(); // Initial load
-
-      // Hook up search input field
+      await loadBookings();
       document.getElementById("searchInput").addEventListener("input", () => renderBookings(allBookings));
-
-      // Hook up status filter dropdown
       document.getElementById("statusFilter").addEventListener("change", () => renderBookings(allBookings));
-
-      // Hook up species filter dropdown
       document.getElementById("speciesFilter").addEventListener("change", () => renderBookings(allBookings));
     });
 
-    /**
-     * Fetch all bookings from API Gateway.
-     * Calls your Lambda → DynamoDB → returns JSON.
-     */
     async function loadBookings() {
       try {
-        // Fetch bookings using your global config URL
-        const res = await fetch(window.PETSTAY_CONFIG.BOOKINGS_API_URL);
+        const token = await getAuthToken();
+        const res = await fetch(window.PETSTAY_CONFIG.BOOKINGS_API_URL, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json"
+          }
+        });
         const result = await res.json();
-
-        // Store in global variable
-        allBookings = result.bookings;
-
-        // Render to HTML table
+        allBookings = Array.isArray(result.bookings) ? result.bookings : [];
         renderBookings(allBookings);
-
-        console.log("Loaded bookings:", allBookings);
       } catch (err) {
         console.error("Failed to load bookings:", err);
+        showToast("Failed to load bookings", true);
       }
     }
 
-    /**
-     * Render bookings to the HTML table:
-     * - Filters by search & dropdowns
-     * - Adds action buttons
-     */
     function renderBookings(bookings) {
       const tbody = document.getElementById("bookingsTableBody");
-
-      // Get search & filter values
       const searchValue = document.getElementById("searchInput")?.value.toLowerCase() || "";
       const statusFilter = document.getElementById("statusFilter")?.value || "";
       const speciesFilter = document.getElementById("speciesFilter")?.value || "";
 
-      // Filter bookings
       const filtered = bookings.filter(b =>
         (!statusFilter || b.Status === statusFilter) &&
         (!speciesFilter || b.PetSpecies === speciesFilter) &&
@@ -364,242 +348,167 @@
         )
       );
 
-      // Clear old rows
       tbody.innerHTML = "";
-
-      // Add rows for each filtered booking
       filtered.forEach((b, index) => {
-        const status = b.Status?.toLowerCase() || "";
-        const statusClass = {
-          "pending": "info-btn",
-          "confirmed": "active-btn",
-          "checked-in": "success-btn",
-          "checked-out": "warning-btn",
-          "cancelled": "close-btn"
-        }[status] || "info-btn";
+        const statusBadge = {
+          "Pending": "bg-warning",
+          "Confirmed": "bg-primary",
+          "Checked-In": "bg-info",
+          "Checked-Out": "bg-success",
+          "Cancelled": "bg-danger"
+        }[b.Status] || "bg-secondary";
 
-        // Decide which action buttons to show
-        const showCheckout = b.Status === "Checked-In";
-        const showCheckIn = b.Status === "Confirmed";
         const showConfirm = b.Status === "Pending";
-        const showRestore = status === "cancelled";
-        const showQR = (b.QRCodeURL || b.QRBase64) && !showRestore;
+        const showCheckIn = b.Status === "Confirmed";
+        const showCheckout = b.Status === "Checked-In";
+        const showRestore = b.Status === "Cancelled";
+        const showQR = b.QRCodeURL || b.QRBase64;
 
-        // Append table row
-        tbody.innerHTML += `
-        <tr>
-          <td>${index + 1}</td>
-          <td>${b.OwnerName}</td>
-          <td>${b.PetName}</td>
-          <td>${b.PetSpecies || "N/A"}</td>
-          <td>${b.PetBreed || "N/A"}</td>
-          <td>${b.PetAge || "N/A"}</td>
-          <td>${b.CheckInDate}</td>
-          <td>${b.CheckOutDate}</td>
-          <td><span class="status-btn ${statusClass}">${b.Status}</span></td>
-          <td>
-            <div class="action">
-              <!-- View details button -->
-              <button class="text-primary" title="View Details" onclick='viewBooking(${JSON.stringify(b)})'>
-                <span class="material-icons">visibility</span>
-              </button>
+        const row = document.createElement("tr");
+        row.innerHTML = `
+  <td>${index + 1}</td>
+  <td><strong>${b.PetName}</strong></td>
+  <td>${b.OwnerName}</td>
+  <td><span class="badge ${statusBadge} text-white">${b.Status}</span></td>
+  <td>
+    <div class="action">
+      <button class="text-primary" title="View Details" data-booking='${encodeURIComponent(JSON.stringify(b))}' onclick="openBookingModal(this)">
+        <span class="material-icons">visibility</span>
+      </button>
+      ${showConfirm ? `
+        <button class="text-warning" title="Confirm" onclick="confirmBooking('${b.BookingID}')">
+          <span class="material-icons">check_circle</span>
+        </button>` : ""}
+      ${showCheckIn ? `
+        <button class="text-info" title="Check In" onclick="checkinBooking('${b.BookingID}')">
+          <span class="material-icons">login</span>
+        </button>` : ""}
+      ${showCheckout ? `
+        <button class="text-success" title="Check Out" onclick="checkoutBooking('${b.BookingID}')">
+          <span class="material-icons">logout</span>
+        </button>` : ""}
+      ${!showRestore ? `
+        <button class="text-danger" title="Cancel" onclick="cancelBooking('${b.BookingID}')">
+          <span class="material-icons">delete</span>
+        </button>` : ""}
+      ${showRestore ? `
+        <button class="text-info" title="Restore" onclick="restoreBooking('${b.BookingID}')">
+          <span class="material-icons">restore</span>
+        </button>` : ""}
+      ${showQR ? `
+        <button class="text-secondary" title="QR Code" data-url="${b.QRCodeURL || 'data:image/png;base64,' + b.QRBase64}" onclick="showQRModal(this)">
+          <span class="material-icons">qr_code</span>
+        </button>` : ""}
+    </div>
+  </td>
+`;
 
-              <!-- Cancel button (unless restoring) -->
-              ${!showRestore ? `
-                <button class="text-danger" title="Cancel Booking" onclick="cancelBooking('${b.BookingID}')">
-                  <span class="material-icons">delete</span>
-                </button>` : ""
-          }
-
-              <!-- Confirm button (Pending only) -->
-              ${showConfirm ? `
-                <button class="text-warning" title="Confirm Booking" onclick="confirmBooking('${b.BookingID}')">
-                  <span class="material-icons">check_circle</span>
-                </button>` : ""
-          }
-
-              <!-- Check In button (Confirmed only) -->
-              ${showCheckIn ? `
-                <button class="text-info" title="Check In" onclick="checkinBooking('${b.BookingID}')">
-                  <span class="material-icons">login</span>
-                </button>` : ""
-          }
-
-              <!-- Check Out button (Checked-In only) -->
-              ${showCheckout ? `
-                <button class="text-success" title="Check Out" onclick="checkoutBooking('${b.BookingID}')">
-                  <span class="material-icons">logout</span>
-                </button>` : ""
-          }
-
-              <!-- Restore button (Cancelled only) -->
-              ${showRestore ? `
-                <button class="text-info" title="Restore Booking" onclick="restoreBooking('${b.BookingID}')">
-                  <span class="material-icons">restore</span>
-                </button>` : ""
-          }
-
-              <!-- View QR button if exists -->
-              ${showQR ? `
-  <button 
-    class="text-secondary"
-    title="View QR Code"
-    data-url="${b.QRCodeURL || 'data:image/png;base64,' + b.QRBase64}"
-    onclick="showQRModal(this)">
-    <span class="material-icons">qr_code</span>
-  </button>` : ""
-          }
-            </div>
-          </td>
-        </tr>
-      `;
+        tbody.appendChild(row);
       });
     }
 
-    /**
-     * Cancel a booking
-     */
-    async function cancelBooking(id) {
-      if (!confirm("Cancel this booking?")) return;
-      try {
-        // Get token for secure call
-        const token = await getAuthToken();
 
-        // Call backend to cancel booking using config
-        const res = await fetch(`${window.PETSTAY_CONFIG.BOOKINGS_API_URL}/${id}/cancel`, {
+
+    async function performBookingAction(id, action, confirmMessage, successMessage, errorMessage) {
+      if (!confirm(confirmMessage)) return;
+
+      const actionUrlMap = {
+        confirm: window.PETSTAY_CONFIG.CONFIRM_BOOKING_URL,
+        cancel: window.PETSTAY_CONFIG.CANCEL_BOOKING_URL,
+        checkin: window.PETSTAY_CONFIG.CHECKIN_BOOKING_URL,
+        checkout: window.PETSTAY_CONFIG.CHECKOUT_BOOKING_URL,
+        restore: window.PETSTAY_CONFIG.RESTORE_BOOKING_URL
+      };
+
+      try {
+        const token = await getAuthToken();
+        const res = await fetch(actionUrlMap[action], {
           method: "POST",
-          headers: { Authorization: `Bearer ${token}` }
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ bookingId: id })
         });
 
         const data = await res.json();
-        if (res.status === 403) {
-          showToast("Not authorized to cancel", true);
-        } else {
-          showToast(data.message || "Cancelled");
-          await loadBookings();
-        }
-      } catch (err) {
-        showToast("Error cancelling booking", true);
-        console.error(err);
-      }
-    }
-
-    /**
-     * Check out a guest
-     */
-    async function checkoutBooking(id) {
-      if (!confirm("Check out this guest?")) return;
-      try {
-        const token = await getAuthToken();
-        const res = await fetch(`${window.PETSTAY_CONFIG.BOOKINGS_API_URL}/${id}/checkout`, {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        const data = await res.json();
-        if (res.status === 403) {
-          showToast("Not authorized to check out", true);
-        } else {
-          showToast(data.message || "Checked out");
-          await loadBookings();
-        }
-      } catch (err) {
-        showToast("Error checking out", true);
-        console.error(err);
-      }
-    }
-
-    /**
-     * Confirm a booking (Pending → Confirmed)
-     */
-    async function confirmBooking(id) {
-      if (!confirm("Confirm this booking?")) return;
-      try {
-        const token = await getAuthToken();
-        const res = await fetch(`${window.PETSTAY_CONFIG.BOOKINGS_API_URL}/${id}/confirm`, {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        const data = await res.json();
-        if (res.status === 403) {
-          showToast("Not authorized to confirm", true);
-        } else {
-          showToast(data.message || "Confirmed");
-          await loadBookings();
-        }
-      } catch (err) {
-        showToast("Error confirming booking", true);
-        console.error(err);
-      }
-    }
-
-    /**
-     * Check in a guest (Confirmed → Checked-In)
-     */
-    async function checkinBooking(id) {
-      if (!confirm("Mark guest as Checked-In?")) return;
-      try {
-        const token = await getAuthToken();
-        const res = await fetch(`${window.PETSTAY_CONFIG.BOOKINGS_API_URL}/${id}/checkin`, {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        const data = await res.json();
-        if (res.status === 403) {
-          showToast("Not authorized to check in", true);
-        } else {
-          showToast(data.message || "Checked-In");
-          await loadBookings();
-        }
-      } catch (err) {
-        showToast("Error checking in", true);
-        console.error(err);
-      }
-    }
-
-    /**
-     * Restore a cancelled booking
-     */
-    async function restoreBooking(id) {
-      if (!confirm("Restore this cancelled booking?")) return;
-      try {
-        const token = await getAuthToken();
-        const res = await fetch(`${window.PETSTAY_CONFIG.BOOKINGS_API_URL}/${id}/restore`, {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        const data = await res.json();
-        showToast(data.message || "Restored");
+        if (!res.ok) throw new Error(data.message || errorMessage);
+        showToast(data.message || successMessage);
         await loadBookings();
       } catch (err) {
-        showToast("Error restoring", true);
-        console.error(err);
+        showToast(errorMessage, true);
+        console.error("Booking action failed:", err);
       }
     }
 
-    /**
-     * Show booking details in a modal popup
-     */
-    function viewBooking(b) {
-      const html = `
-      <p><strong>Owner:</strong> ${b.OwnerName}</p>
-      <p><strong>Email:</strong> ${b.Email}</p>
-      <p><strong>Phone:</strong> ${b.PhoneNumber}</p>
-      <hr>
-      <p><strong>Pet:</strong> ${b.PetName} (${b.PetSpecies}, ${b.PetBreed || "N/A"})</p>
-      <p><strong>Age:</strong> ${b.PetAge}</p>
-      <hr>
-      <p><strong>Check-In:</strong> ${b.CheckInDate}</p>
-      <p><strong>Check-Out:</strong> ${b.CheckOutDate}</p>
-      <p><strong>Status:</strong> ${b.Status}</p>
-      <p><strong>Room:</strong> ${b.RoomNumber || "N/A"}</p>
-    `;
-      document.getElementById("modalDetails").innerHTML = html;
-      new bootstrap.Modal(document.getElementById("bookingModal")).show();
+    async function cancelBooking(id) {
+      await performBookingAction(id, "cancel", "Cancel this booking?", "Cancelled", "Error cancelling booking");
     }
 
-    /**
-     * Show a success or error toast message
-     */
+    async function confirmBooking(id) {
+      await performBookingAction(id, "confirm", "Confirm this booking?", "Confirmed", "Error confirming booking");
+    }
+
+    async function checkinBooking(id) {
+      await performBookingAction(id, "checkin", "Mark guest as Checked-In?", "Checked-In", "Error checking in");
+    }
+
+    async function checkoutBooking(id) {
+      await performBookingAction(id, "checkout", "Check out this guest?", "Checked Out", "Error checking out");
+    }
+
+    async function restoreBooking(id) {
+      await performBookingAction(id, "restore", "Restore this booking?", "Restored", "Error restoring booking");
+    }
+
+    function openBookingModal(button) {
+      const bookingData = button.dataset.booking;
+      if (!bookingData) return;
+      const decoded = decodeURIComponent(bookingData);
+      const b = JSON.parse(decoded);
+
+      const statusClass = {
+        "Pending": "warning",
+        "Confirmed": "primary",
+        "Checked-In": "info",
+        "Checked-Out": "success",
+        "Cancelled": "danger"
+      }[b.Status] || "secondary";
+
+      const html = `
+    <h5 class="fw-bold mb-3">${b.PetName} <small class="text-muted">(${b.PetSpecies || "N/A"})</small></h5>
+
+    ${b.PetPhotoURL ? `
+      <img src="${b.PetPhotoURL}" alt="Pet Photo" class="img-fluid rounded border mb-3" style="max-width: 220px;" onerror="this.style.display='none'" />
+    ` : '<p class="text-muted">No photo available</p>'}
+
+    <hr class="my-3">
+
+    <h6 class="fw-bold">Owner Info</h6>
+    <p><strong>Name:</strong> ${b.OwnerName}</p>
+    <p><strong>Email:</strong> ${b.Email || "N/A"}</p>
+    <p><strong>Phone:</strong> ${b.PhoneNumber || "N/A"}</p>
+
+    <hr class="my-3">
+
+    <h6 class="fw-bold">Pet Details</h6>
+    <p><strong>Breed:</strong> ${b.PetBreed || "N/A"}</p>
+    <p><strong>Age:</strong> ${b.PetAge || "N/A"}</p>
+    <p><strong>Species:</strong> ${b.PetSpecies || "N/A"}</p>
+
+    <hr class="my-3">
+    <h6 class="fw-bold">Booking Info</h6>
+    <p><strong>Check-In:</strong> ${b.CheckInDate}</p>
+    <p><strong>Check-Out:</strong> ${b.CheckOutDate}</p>
+    <p><strong>Status:</strong> <span class="badge bg-${statusClass}">${b.Status}</span></p>
+    ${b.RoomNumber ? `<p><strong>Room:</strong> ${b.RoomNumber}</p>` : ""}
+    ${b.BookingID ? `<p class="text-muted"><small>Booking ID: ${b.BookingID}</small></p>` : ""}
+  `;
+
+      document.getElementById("modalContent").innerHTML = html;
+      new bootstrap.Modal(document.getElementById("bookingDetailsModal")).show();
+    }
+
     function showToast(msg, isError = false) {
       const toastEl = document.getElementById("toast");
       const toastMsg = document.getElementById("toastMessage");
@@ -609,19 +518,20 @@
       bootstrap.Toast.getOrCreateInstance(toastEl).show();
     }
 
-    /**
-     * Show QR Code in modal
-     */
     function showQRModal(button) {
       const qrUrl = button.dataset.url;
       if (!qrUrl) {
-        alert("QR not available");
+        alert("QR code not available.");
         return;
       }
       const img = document.getElementById("qrModalImage");
       img.src = qrUrl;
       new bootstrap.Modal(document.getElementById("qrModal")).show();
     }
+
+
+
+
   </script>
 
 </body>
