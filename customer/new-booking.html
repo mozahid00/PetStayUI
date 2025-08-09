@@ -229,7 +229,7 @@
   // Step 1: Get a presigned URL from the API
   let response;
   try {
-    response = await fetch(window.PETSTAY_CONFIG.PET_PHOTO_UPLOAD_URL, {
+    response = await fetch(window.PETSTAY_CONFIG.UPLOAD_URL_API, {  //response = await fetch(window.PETSTAY_CONFIG.PET_PHOTO_UPLOAD_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
