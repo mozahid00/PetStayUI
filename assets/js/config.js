@@ -25,7 +25,7 @@ window.PETSTAY_CONFIG = {
   IOT_ENDPOINT: 'a14wno4fkns9pt-ats.iot.us-east-1.amazonaws.com',  // Your IoT endpoint
   IOT_TOPIC_DASHBOARD: 'petstay/admin/stats',  // Your MQTT topic
   IOT_CLIENT_PREFIX: 'admin-dashboard-',                       // Optional client ID prefix
-  IDENTITY_POOL_ID: 'us-east-1:25fbdcc1-9e3d-4655-adbf-679d2f895c0c',
+  IDENTITY_POOL_ID: 'us-east-2:a8923f25-823c-455e-b47d-a0fb071d8f4f',
 };
 
 for (const key in window.PETSTAY_CONFIG) {
